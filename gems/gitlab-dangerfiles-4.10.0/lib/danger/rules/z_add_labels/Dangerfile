@@ -1,0 +1,15 @@
+# This rule is the (almost) last one since we want to add all the labels to add at once,
+# so we let other rules adding to `helper.labels_to_add` before actually adding them via the API here.
+
+# Don't try to post anything locally.
+return unless helper.ci?
+
+def post_labels(labels)
+  gitlab.api.update_merge_request(helper.mr_target_project_id,
+    helper.mr_iid,
+    add_labels: labels.join(","))
+rescue Gitlab::Error::Forbidden
+  warn("Labels missing: please ask a reviewer or maintainer to add #{helper.labels_list(labels)} to this merge request.")
+end
+
+post_labels(helper.labels_to_add) if helper.labels_to_add.any?

@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$id": "https://gitlab.com/gitlab-org/ruby/gems/labkit-ruby/-/raw/master/config/covered_experiences/schema.json",
+  "title": "Covered Experience Definition",
+  "description": "Schema for GitLab Covered Experience files",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable description of the covered experience"
+    },
+    "feature_category": {
+      "type": "string",
+      "minLength": 1,
+      "description": "GitLab feature category this experience belongs to"
+    },
+    "urgency": {
+      "type": "string",
+      "enum": [
+        "sync_fast",
+        "sync_slow",
+        "async_fast",
+        "async_slow"
+      ],
+      "description": "Urgency level for this covered experience"
+    }
+  },
+  "required": [
+    "description",
+    "feature_category",
+    "urgency"
+  ]
+}
+

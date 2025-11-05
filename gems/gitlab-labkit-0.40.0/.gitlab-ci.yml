@@ -1,0 +1,52 @@
+stages:
+  - validate
+  - release
+  - renovate_bot
+
+# Prevent double-pipelines for branch pipelines vs. merge request pipelines
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+include:
+  - local: .gitlab-ci-asdf-versions.yml
+
+  # This template should be included in all Infrastructure projects.
+  # It includes standard checks, gitlab-scanners, validations and release processes
+  # common to all projects using this template library.
+  # see https://gitlab.com/gitlab-com/gl-infra/common-ci-tasks/-/blob/main/templates/standard.md
+  - component: $CI_SERVER_FQDN/gitlab-com/gl-infra/common-ci-tasks/standard-build@v2.78
+
+  # Runs rspec tests and rubocop on the project
+  # see https://gitlab.com/gitlab-com/gl-infra/common-ci-tasks/-/blob/main/templates/ruby.md
+  - component: $CI_SERVER_FQDN/gitlab-com/gl-infra/common-ci-tasks/ruby-build@v2.78
+
+  - component: $CI_SERVER_FQDN/gitlab-com/gl-infra/common-ci-tasks/danger@v2.78
+
+.test_template: &test_definition
+  extends: .with_bundle
+  image: ruby:${RUBY_VERSION}
+  stage: validate
+  script:
+    - gem install bundler --no-document
+    - bundle config --local path vendor
+    - bundle install
+    - bundle exec rake verify build install
+
+ruby-versions:
+  <<: *test_definition
+  parallel:
+    matrix:
+      - RUBY_VERSION: ["3.2", "3.3"]
+
+deploy:
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
+  extends: .with_bundle
+  stage: release
+  script:
+    - tools/deploy-rubygem.sh

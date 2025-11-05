@@ -1,0 +1,1 @@
+danger.import_plugin(File.expand_path("../danger/*.rb", __dir__))

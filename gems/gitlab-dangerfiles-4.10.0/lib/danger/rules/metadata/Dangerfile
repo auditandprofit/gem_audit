@@ -1,0 +1,7 @@
+# frozen_string_literal: true
+
+fail("Merge request description is too short. Please provide a proper merge request description.") if helper.mr_description.size < 5 # rubocop:disable Style/SignalException:
+
+warn("This merge request does not have any assignee yet. Setting an assignee clarifies who needs to take action on the merge request at any given time.") if helper.mr_assignees.empty?
+
+warn("This merge request does not refer to an existing milestone.", sticky: false) if helper.mr_milestone.nil?

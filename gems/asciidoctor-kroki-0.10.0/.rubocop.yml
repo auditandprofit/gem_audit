@@ -1,0 +1,34 @@
+AllCops:
+  TargetRubyVersion: 2.7
+  SuggestExtensions: false
+  NewCops: enable
+
+Style/Encoding:
+  Enabled: false
+
+Layout/EndOfLine:
+  EnforcedStyle: lf
+
+Layout/LineLength:
+  Max: 180
+
+Metrics/ClassLength:
+  Max: 150
+
+Metrics/MethodLength:
+  Max: 50
+
+Metrics/CyclomaticComplexity:
+  Max: 10
+
+Metrics/PerceivedComplexity:
+  Max: 10
+
+Metrics/AbcSize:
+  Max: 31
+
+Metrics/ParameterLists:
+  Max: 7
+
+Gemspec/RequiredRubyVersion:
+  Enabled: false

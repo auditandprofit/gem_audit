@@ -1,0 +1,64 @@
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 2.7.2
+  SuggestExtensions: false
+  Exclude:
+    - "db/**/*"
+    - "gemfiles/**/*"
+    - "vendor/**/*"
+Layout/SpaceBeforeFirstArg:
+  Enabled: false
+Layout/LineLength:
+  Enabled: false
+Layout/SpaceAroundEqualsInParameterDefault:
+  Enabled: false
+Lint/UnusedBlockArgument:
+  Enabled: false
+Lint/UnusedMethodArgument:
+  Enabled: false
+Metrics/AbcSize:
+  Enabled: false
+Metrics/ClassLength:
+  Enabled: false
+Metrics/CyclomaticComplexity:
+  Enabled: false
+Metrics/MethodLength:
+  Enabled: false
+Metrics/ModuleLength:
+  Enabled: false
+Metrics/PerceivedComplexity:
+  Enabled: false
+Metrics/BlockLength:
+  Enabled: false
+Style/ClassAndModuleChildren:
+  Enabled: false
+Style/ClassVars:
+  Enabled: false
+Style/Documentation:
+  Enabled: false
+Style/DoubleNegation:
+  Enabled: false
+Naming/FileName:
+  Enabled: false
+Style/GuardClause:
+  Enabled: false
+Style/NilComparison:
+  Enabled: false
+Style/RescueModifier:
+  Enabled: false
+Style/SignalException:
+  Enabled: false
+Style/SingleLineMethods:
+  Enabled: false
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+Naming/BinaryOperatorParameterName:
+  Enabled: false
+Naming/VariableNumber:
+  Enabled: false
+Gemspec/RequiredRubyVersion:
+  Enabled: false
+Gemspec/RequireMFA:
+  Enabled: false
+Gemspec/DevelopmentDependencies:
+  EnforcedStyle: gemspec

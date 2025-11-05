@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: ['**']
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        bundler-cache: true
+        
+    - name: Rubocop
+      run: bundle exec rubocop
+
+  tests:
+    needs: lint
+    services:
+      db:
+        image: postgres
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: jsonb_accessor
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - gemfile: activerecord_6.1
+            ruby: '3.0'
+
+          - gemfile: activerecord_6.1
+            ruby: '3.1'
+
+          - gemfile: activerecord_6.1
+            ruby: '3.2'
+
+          - gemfile: activerecord_7.0
+            ruby: '3.0'
+
+          - gemfile: activerecord_7.0
+            ruby: '3.1'
+
+          - gemfile: activerecord_7.0
+            ruby: '3.2'
+
+          - gemfile: activerecord_7.1
+            ruby: '3.0'
+
+          - gemfile: activerecord_7.1
+            ruby: '3.1'
+
+          - gemfile: activerecord_7.1
+            ruby: '3.2'
+
+          - gemfile: activerecord_7.0
+            ruby: 'jruby-9.4'
+
+    name: ${{ matrix.gemfile }}, ruby ${{ matrix.ruby }}
+
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/${{ matrix.gemfile }}.gemfile
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+        bundler-cache: true
+
+    - name: Bundle install
+      run: |
+        bundle install
+
+    - name: Setup DB
+      run: |
+        bundle exec rake db:schema:load
+
+    - name: Run tests
+      run: |
+        bundle exec rake spec

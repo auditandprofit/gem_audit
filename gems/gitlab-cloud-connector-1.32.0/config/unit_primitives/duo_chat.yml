@@ -1,0 +1,16 @@
+---
+name: duo_chat
+description: Ask various GitLab-related questions and tasks.
+cut_off_date: 2024-10-17T00:00:00+00:00
+min_gitlab_version_for_free_access: '16.8'
+min_gitlab_version: '16.9'
+group: group::duo_chat
+feature_category: duo_chat
+documentation_url: https://docs.gitlab.com/ee/user/gitlab_duo/#gitlab-duo-chat
+backend_services:
+  - ai_gateway
+  - duo_workflow_service
+add_ons:
+  - duo_pro
+  - duo_enterprise
+  - duo_core

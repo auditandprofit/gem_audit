@@ -1,0 +1,31 @@
+# frozen_string_literal: true
+
+gitlab_org_gitlab_project_id = 278964
+
+return if git.commits.size <= 20
+
+general_message = 'This merge request has more than 20 commits which may cause issues in some of the jobs. If you see errors like missing commits'
+
+warning_message = "#{general_message}, please consider squashing some commits so it is within 20 commits."
+
+failure_message = "#{general_message}, please enable squashing and consider squashing yourself as well."
+
+# GitLab the project has quite some jobs relying on having less than 20
+# commits due to GIT_DEPTH being set to 20. Those jobs require accessing to
+# all the commits within the merge request thus it cannot have more than that.
+# We also have a higher commit history standard for a larger project like that
+# See also:
+#
+# https://gitlab.com/gitlab-org/gitlab/-/issues/358125
+# https://gitlab.com/gitlab-org/ruby/gems/gitlab-dangerfiles/-/issues/49
+if helper.mr_target_project_id == gitlab_org_gitlab_project_id
+  details = "See [comments in the file](https://gitlab.com/gitlab-org/ruby/gems/gitlab-dangerfiles/-/blob/master/lib/danger/rules/commits_counter/Dangerfile) implementing this for more details."
+
+  if helper.squash_mr?
+    warn "#{warning_message} #{details}"
+  else
+    failure "#{failure_message} #{details}"
+  end
+else
+  warn warning_message
+end

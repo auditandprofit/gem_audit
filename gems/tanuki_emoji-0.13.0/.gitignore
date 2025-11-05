@@ -1,0 +1,18 @@
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
+/.idea
+.rspec_status
+/*.gem
+/app/assets/**/*
+.DS_Store
+/pages/_data/emojis.json
+/pages/_site/**/*
+
+# rspec failure tracking
+.rspec_status

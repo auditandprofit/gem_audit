@@ -1,0 +1,12 @@
+# frozen_string_literal: true
+
+return if helper.stable_branch_mr?
+
+thresholds = helper.config.code_size_thresholds
+lines_changed = git.lines_of_code
+
+if lines_changed > thresholds[:high]
+  warn "This merge request is definitely too big (#{lines_changed} lines changed), please split it into multiple merge requests."
+elsif lines_changed > thresholds[:medium]
+  warn "This merge request is quite big (#{lines_changed} lines changed), please consider splitting it into multiple merge requests."
+end

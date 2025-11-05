@@ -1,0 +1,50 @@
+{
+  "name": "deckar01-task_list",
+  "version": "2.3.4",
+  "description": "Markdown TaskList components",
+  "main": "dist/task_list.js",
+  "directories": {
+    "test": "test"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "script/cibuild",
+    "unit": "web-test-runner bin/test/unit/*.js",
+    "lint": "coffeelint app/assets/javascripts/task_list.coffee",
+    "build:css": "sass --no-source-map app/assets/stylesheets/task_list.scss dist/task_list.css",
+    "build:js": "node build.mjs",
+    "build": "npm run build:css && npm run build:js",
+    "prepare": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/deckar01/task_list.git"
+  },
+  "keywords": [
+    "task",
+    "list",
+    "markdown",
+    "ruby",
+    "check"
+  ],
+  "author": "Jared Deckard <jared.deckard@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://gitlab.com/deckar01/task_list/issues"
+  },
+  "homepage": "https://gitlab.com/deckar01/task_list#task-lists",
+  "devDependencies": {
+    "@esm-bundle/chai": "^4.3.4-fix.0",
+    "@web/test-runner": "^0.17.0",
+    "bower": "^1.8.14",
+    "coffeelint": "^2.1.0",
+    "coffeescript": "^2.7.0",
+    "esbuild": "^0.19.0",
+    "esbuild-coffeescript": "^2.2.0",
+    "esbuild-plugin-umd-wrapper": "^1.0.7",
+    "jquery": "^3.7.0",
+    "sass": "^1.65.1"
+  }
+}

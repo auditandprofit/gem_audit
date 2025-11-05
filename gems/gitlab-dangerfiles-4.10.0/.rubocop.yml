@@ -1,0 +1,41 @@
+inherit_from: .rubocop_todo.yml
+
+inherit_gem:
+  gitlab-styles:
+    - rubocop-default.yml
+
+AllCops:
+  TargetRubyVersion: <%= RUBY_VERSION[/^\d+\.\d+/, 0] %>
+  NewCops: enable
+
+# Disables Rails cops.
+Rails:
+  Enabled: false
+
+# Disables Rails-related cops
+CodeReuse/ActiveRecord:
+  Enabled: false
+
+Layout/LineLength:
+  Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 35
+
+RSpec/FilePath:
+  Enabled: false
+
+RSpec/SpecFilePathFormat:
+  Enabled: false
+
+Style/ArrayIntersect:
+  Enabled: false # We're still supporting Ruby 3.1 and below
+
+Style/HashSyntax:
+  EnforcedStyle: ruby19_no_mixed_keys
+  # Introduced in Ruby 3.1. Disable for now.
+  EnforcedShorthandSyntax: never
+
+# Was problematic, and not included in the .rubocop_todo.yml
+GitlabSecurity/PublicSend:
+  Enabled: false

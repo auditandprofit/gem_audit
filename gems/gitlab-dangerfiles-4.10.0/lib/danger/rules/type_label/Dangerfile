@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+require_relative "../../../gitlab/dangerfiles/type_label_guesser"
+
+return if helper.has_scoped_label_with_scope?("type")
+
+if respond_to?(:changelog)
+  type_label_guesser = Gitlab::Dangerfiles::TypeLabelGuesser.new
+  helper.labels_to_add.concat(type_label_guesser.labels_from_changelog_categories(changelog.categories))
+end

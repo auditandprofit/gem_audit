@@ -1,0 +1,92 @@
+include:
+  - component: gitlab.com/components/container-scanning/container-scanning@~latest
+  - component: gitlab.com/components/sast/sast@~latest
+  - component: gitlab.com/components/secret-detection/secret-detection@~latest
+  - component: gitlab.com/gitlab-org/components/gem-release/gem-release@~latest
+  - template: Security/DAST.gitlab-ci.yml  # https://gitlab.com/gitlab-org/gitlab-foss/blob/master/lib/gitlab/ci/templates/Security/DAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml  # https://gitlab.com/gitlab-org/gitlab-foss/blob/master/lib/gitlab/ci/templates/Security/Dependency-Scanning.gitlab-ci.yml
+
+variables:
+  RUBY_VERSION: "2.7"
+
+stages:
+  - test
+  - dast
+  - deploy
+
+default:
+  image: ruby:${RUBY_VERSION}
+  cache:
+    paths:
+      - vendor
+  tags:
+    - gitlab-org
+
+.before_scripts: &before_scripts
+  - git config --global user.email "bot@gitlab.com"
+  - git config --global user.name "Bot User"
+  - bundle config set --local deployment true
+  - bundle install -j $(nproc)
+
+workflow:
+  rules: &workflow_rules
+    # For merge requests, create a pipeline.
+    - if: '$CI_MERGE_REQUEST_IID'
+    # For `master` branch, create a pipeline (this includes on schedules, pushes, merges, etc.).
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    # For tags, create a pipeline.
+    - if: '$CI_COMMIT_TAG'
+
+rspec:
+  script:
+    - bundle exec rspec spec -f d -c
+  before_script: *before_scripts
+  parallel:
+    matrix:
+      - RUBY_VERSION: ["2.7", "3.0", "3.1", "3.2"]
+
+rspec_integration:
+  script:
+    - bundle exec rspec spec -t integration -f d -c
+  before_script: *before_scripts
+  services:
+    - name: redis:${REDIS_VERSION}
+      alias: redis-master
+    - name: bitnami/redis-sentinel:${REDIS_SENTINEL_VERSION}
+      alias: redis-sentinel
+      command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Starting Redis Sentinel..."
+          cat <<EOF > /opt/bitnami/redis-sentinel/etc/sentinel.conf
+          user default off
+          user ${REDIS_SENTINEL_USERNAME} on >${REDIS_SENTINEL_PASSWORD} +@all
+          sentinel monitor mymaster redis-master 6379 2
+          sentinel resolve-hostnames yes
+          sentinel down-after-milliseconds mymaster 5000
+          EOF
+          redis-sentinel /opt/bitnami/redis-sentinel/etc/sentinel.conf
+
+  variables:
+    REDIS_URL: "redis://redis"
+    REDIS_SENTINEL_URL: "redis://mymaster"
+    REDIS_SENTINELS: "redis-sentinel:26379"
+    REDIS_VERSION: latest
+    REDIS_SENTINEL_VERSION: latest
+    REDIS_SENTINEL_USERNAME: "my-sentinel-username"
+    REDIS_SENTINEL_PASSWORD: "my-sentinel-password"
+  parallel:
+    matrix:
+      - RUBY_VERSION: ["2.7", "3.0", "3.1", "3.2"]
+
+rubocop:
+  script:
+    - bundle exec rubocop
+  before_script: *before_scripts
+
+gemnasium-dependency_scanning:
+  rules: *workflow_rules
+
+secret_detection:
+  rules: *workflow_rules

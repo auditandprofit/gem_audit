@@ -1,0 +1,105 @@
+# frozen_string_literal: true
+
+require 'forwardable'
+require 'json-schema'
+require 'pathname'
+require 'yaml'
+
+module Labkit
+  module CoveredExperience
+    Definition = Data.define(:covered_experience, :description, :feature_category, :urgency)
+
+    class Registry
+      extend Forwardable
+
+      SCHEMA_PATH = File.expand_path('../../../config/covered_experiences/schema.json', __dir__)
+
+      def_delegator :@experiences, :empty?
+
+      # @param dir [String, Pathname] Directory path containing YAML file definitions
+      #   Defaults to 'config/covered_experiences' relative to the calling application's root
+      def initialize(dir: File.join("config", "covered_experiences"))
+        @dir = Pathname.new(Dir.pwd).join(dir)
+        @experiences = load_on_demand
+      end
+
+      # Retrieve a definition experience given a covered_experience_id.
+      #
+      # @param covered_experience_id [String, Symbol] Covered experience identifier
+      # @return [Experience, nil] An experience if present, otherwise nil
+      def [](covered_experience_id)
+        @experiences[covered_experience_id.to_s]
+      end
+
+      private
+
+      # Initialize a hash that loads experiences on-demand
+      #
+      # @return [Hash] Hash with lazy loading behavior
+      def load_on_demand
+        unless readable_dir?
+          warn("Directory not readable: #{@dir}")
+          return {}
+        end
+
+        Hash.new do |result, experience_id|
+          experience = load_experience(experience_id.to_s)
+          # we also store nil to memoize the value and avoid triggering load_experience again
+          result[experience_id.to_s] = experience
+        end
+      end
+
+      # Load a covered experience definition.
+      #
+      # @param experience_id [String] Experience identifier
+      # @return [Experience, nil] Loaded experience or nil if not found/invalid
+      def load_experience(experience_id)
+        file_path = @dir.join("#{experience_id}.yml")
+
+        unless file_path.exist?
+          warn("Invalid Covered Experience definition: #{experience_id}")
+          return nil
+        end
+
+        read_experience(file_path, experience_id)
+      end
+
+      def readable_dir?
+        @dir.exist? && @dir.directory? && @dir.readable?
+      end
+
+      # Read and validate a definition experience file
+      #
+      # @param file_path [Pathname] Path to the definition file
+      # @param experience_id [String] Expected experience ID
+      # @return [Experience, nil] Parsed experience or nil if invalid
+      def read_experience(file_path, experience_id)
+        content = YAML.safe_load(file_path.read)
+        return nil unless content.is_a?(Hash)
+
+        errors = JSON::Validator.fully_validate(schema, content)
+        return Definition.new(covered_experience: experience_id, **content) if errors.empty?
+
+        warn("Invalid schema for #{file_path}")
+
+        nil
+      rescue Psych::SyntaxError => e
+        warn("Invalid definition file #{file_path}: #{e.message}")
+      rescue StandardError => e
+        warn("Unexpected error processing #{file_path}: #{e.message}")
+      end
+
+      def schema
+        @schema ||= JSON.parse(File.read(SCHEMA_PATH))
+      end
+
+      def warn(message)
+        logger.warn(component: self.class.name, message: message)
+      end
+
+      def logger
+        Labkit::CoveredExperience.configuration.logger
+      end
+    end
+  end
+end

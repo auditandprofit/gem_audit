@@ -1,0 +1,23 @@
+
+cache:
+  paths:
+    - vendor/ruby
+
+before_script:
+  - apk add --update git make build-base
+  - gem install bundler
+  - bundle install --path vendor/ruby
+
+rubocop:
+  image: "ruby:3.0-alpine"
+  script:
+    - bundle exec rubocop
+  allow_failure: true
+
+rspec:
+  image: "ruby:${RUBY_VERSION}-alpine"
+  script:
+    - bundle exec rake
+  parallel:
+    matrix:
+      - RUBY_VERSION: [ "3.0", "3.1", "3.2", "3.3", "3.4" ]

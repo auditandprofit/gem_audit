@@ -1,0 +1,14 @@
+/.DS_Store
+/vendor/
+/.rspec
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/pkg/
+/spec/reports/
+/tmp/
+/doc/
+
+# rspec failure tracking
+.rspec_status

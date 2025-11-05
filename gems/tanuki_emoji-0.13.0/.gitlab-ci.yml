@@ -1,0 +1,121 @@
+include:
+  # https://gitlab.com/gitlab-org/gitlab/blob/master/lib/gitlab/ci/templates/Workflows/MergeRequest-Pipelines.gitlab-ci.yml
+  - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
+  # https://gitlab.com/gitlab-org/gitlab/blob/master/lib/gitlab/ci/templates/Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - component: gitlab.com/components/sast/sast@~latest
+  - component: gitlab.com/components/secret-detection/secret-detection@~latest
+  - component: gitlab.com/components/code-quality/code-quality@~latest
+  - component: gitlab.com/gitlab-org/components/danger-review/danger-review@~latest
+  - component: gitlab.com/gitlab-org/components/gem-release/gem-release@~latest
+    inputs:
+      build_native_gems: "false"
+      smoke_test_before_script: "gem install pkg/tanuki_emoji-*.gem"
+      smoke_test_script: "ruby -r 'tanuki_emoji' -e \"exit 1 unless TanukiEmoji.find_by_alpha_code(':smile:').codepoints == '😄' && File.exist?(TanukiEmoji.images_path + '/' + TanukiEmoji.find_by_alpha_code(':smile:').image_name)\""
+      dry_run: "false"
+
+.ruby: &ruby
+  variables:
+    LANG: "C.UTF-8"
+  before_script:
+    - ruby -v                                   # Print out ruby version for debugging
+    - bundle config set --local deployment true
+    - bundle install -j $(nproc)                # Install dependencies into ./vendor/ruby
+  parallel:
+    matrix:
+      - RUBY_VERSION: ['3.0', '3.1', '3.2']
+  image: "ruby:$RUBY_VERSION"
+  cache:
+    paths:
+      - vendor/ruby
+    key: 'ruby$RUBY_VERSION'
+
+rspec:
+  extends: .ruby
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  script:
+    - bundle exec rake update_assets
+    - bundle exec rake spec
+  artifacts:
+    reports:
+      junit: rspec.xml
+      coverage_report:
+        path: coverage/coverage.xml
+        coverage_format: cobertura
+
+gem:
+  extends: .ruby
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  script:
+    - bundle exec rake install
+    - gem uninstall tanuki_emoji
+    - gem install pkg/*.gem
+    - ruby -r 'tanuki_emoji' -e "exit 1 unless TanukiEmoji.find_by_alpha_code(':smile:').codepoints == '😄'"
+    - ruby -r 'tanuki_emoji' -e "exit 1 unless File.exist?(TanukiEmoji.images_path + '/' + TanukiEmoji.find_by_alpha_code(':smile:').image_name)"
+  artifacts:
+    paths:
+      - pkg/*.gem
+
+# override the gem-release component in order to build the way we need
+build-regular-gem:
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  script:
+    - bundle install -j $(nproc)
+    - bundle exec rake build
+    - '[ -f "${GEM_FILE}" ] || (echo "No ${GEM_FILE} file found!" && exit 1)'
+
+rubocop:
+  extends: .ruby
+  script:
+    - bundle exec rake rubocop
+
+secret_detection:
+  rules:
+    - if: $SECRET_DETECTION_DISABLED
+      when: never
+    # for default branch (pushes, merges, etc.)
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    # for all merge requests
+    - if: '$CI_MERGE_REQUEST_IID'
+    - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train" # specific
+      when: never
+  needs: []
+  dependencies: [] # Don't download artifacts
+
+update-changelog:
+  stage: deploy
+  image: ruby:3.0
+  rules:
+    - if: '$GITLAB_API_TOKEN == null'
+      when: never
+    - changes: ["CHANGELOG.md"]
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes: ["lib/**/version.rb"]
+  variables:
+    GEMSPEC_FILE: "${CI_PROJECT_NAME}.gemspec"
+  script:
+    - |
+      version=$(ruby -e "print Gem::Specification.load('${GEMSPEC_FILE}').version")
+      [ -n "${version}" ] || (echo "VERSION could not be parsed in ${GEMSPEC_FILE}!" && exit 1)
+    - 'curl --fail --request POST --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/changelog?version=${version}&branch=${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}"'
+
+pages:
+  stage: deploy
+  image: ruby:3.2
+  script:
+    - echo "The site will be deployed to $CI_PAGES_URL"
+    - gem install bundler
+    - cd pages
+    - bundle install
+    - bundle exec rake generate
+    - bundle exec jekyll build
+  artifacts:
+    paths:
+      - pages
+  publish: pages/_site
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

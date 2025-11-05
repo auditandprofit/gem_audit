@@ -1,0 +1,60 @@
+include:
+  - template: SAST.gitlab-ci.yml  # https://gitlab.com/gitlab-org/gitlab-foss/blob/master/lib/gitlab/ci/templates/Security/SAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml # https://docs.gitlab.com/ee/user/application_security/dependency_scanning/
+  - template: Security/Secret-Detection.gitlab-ci.yml # https://docs.gitlab.com/ee/user/application_security/secret_detection/
+
+variables:
+  LANG: "C.UTF-8"
+
+default:
+  tags:
+    - gitlab-org
+
+workflow:
+  rules: &workflow_rules
+    # For merge requests, create a pipeline.
+    - if: '$CI_MERGE_REQUEST_IID'
+    # For `master` branch, create a pipeline (this includes on schedules, pushes, merges, etc.).
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    # For tags, create a pipeline.
+    - if: '$CI_COMMIT_TAG'
+
+.specs:
+  cache:
+    key: "$CI_JOB_NAME"
+    paths:
+      - vendor/ruby
+  before_script:
+    - apt update
+    - apt install python3 python3-pip python3-venv git build-essential -y
+    - apt remove python -y
+    - python3 -m venv /tmp/venv
+    - source /tmp/venv/bin/activate
+    - pip3 install docutils==$DOCUTILS_VERSION
+    - bundle install --jobs $(nproc)
+  script:
+    - echo "Testing without posix-spawn..."
+    - cp Gemfile Gemfile.orig
+    - sed -i -e '/posix-spawn/d' Gemfile
+    - bundle install
+    - bundle exec rake test
+    - echo "Testing with posix-spawn..."
+    - mv Gemfile.orig Gemfile
+    - bundle install
+    - bundle exec rake test
+
+ruby-docutils-spec:
+  image: ruby:$RUBY_VERSION
+  extends: .specs
+  parallel:
+    matrix:
+      - RUBY_VERSION: ['3.0', '3.1', '3.2', '3.3', '3.4']
+        DOCUTILS_VERSION: ['0.21.2']
+
+# Dependency Scanning
+gemnasium-dependency_scanning:
+  rules: *workflow_rules
+
+# Secret Detection
+secret_detection:
+  rules: *workflow_rules

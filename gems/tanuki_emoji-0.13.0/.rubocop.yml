@@ -1,0 +1,42 @@
+inherit_gem:
+  gitlab-styles:
+    - rubocop-bundler.yml
+    - rubocop-gemspec.yml
+    - rubocop-layout.yml
+    - rubocop-lint.yml
+    - rubocop-metrics.yml
+    - rubocop-naming.yml
+    - rubocop-performance.yml
+    - rubocop-rspec.yml
+    - rubocop-security.yml
+    - rubocop-style.yml
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.0
+  Exclude:
+    - '*.gemspec'
+    - 'vendor/**/*'
+  SuggestExtensions: false
+
+Style/StringLiterals:
+  Enabled: false
+
+Style/StringLiteralsInInterpolation:
+  Enabled: true
+  EnforcedStyle: double_quotes
+
+Layout/LineLength:
+  Max: 140
+
+Metrics:
+  Enabled: false
+
+RSpec/BeEq:
+  Enabled: false
+
+InternalAffairs/MissingCopDepartment:
+  Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false

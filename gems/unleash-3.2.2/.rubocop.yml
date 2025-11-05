@@ -1,0 +1,70 @@
+# inherit_from: .rubocop_todo.yml
+
+AllCops:
+  TargetRubyVersion: 2.5
+
+Naming/PredicateName:
+  AllowedMethods:
+    - is_enabled?
+
+Metrics/ClassLength:
+  Max: 120
+Layout/LineLength:
+  Max: 140
+Metrics/MethodLength:
+  Max: 20
+Metrics/BlockLength:
+  Max: 100
+  Exclude:
+    - 'spec/unleash/client_spec.rb'
+    - 'spec/unleash/feature_toggle_spec.rb'
+
+Metrics/AbcSize:
+  Max: 25
+Metrics/CyclomaticComplexity:
+  Max: 9
+Metrics/PerceivedComplexity:
+  Max: 9
+
+Style/Documentation:
+  Enabled: false
+
+Style/StringLiterals:
+  Enabled: false
+Style/RedundantSelf:
+  Enabled: false
+
+Style/SymbolArray:
+  EnforcedStyle: brackets
+Style/WordArray:
+  EnforcedStyle: brackets
+Style/PreferredHashMethods:
+  EnforcedStyle: verbose
+Style/FrozenStringLiteralComment:
+  EnforcedStyle: never
+Style/GuardClause:
+  MinBodyLength: 8
+
+Style/HashEachMethods:
+  Enabled: true
+Style/HashTransformKeys:
+  Enabled: true
+Style/HashTransformValues:
+  Enabled: true
+
+Style/IfInsideElse:
+  Exclude:
+    - 'bin/unleash-client'
+
+Style/Next:
+  Exclude:
+    - 'lib/unleash/scheduled_executor.rb'
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+Layout/SpaceBeforeBlockBraces:
+  EnforcedStyle: no_space
+  Exclude:
+    - 'unleash-client.gemspec'
+    - 'spec/**/*.rb'

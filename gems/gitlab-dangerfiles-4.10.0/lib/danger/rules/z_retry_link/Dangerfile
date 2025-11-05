@@ -1,0 +1,10 @@
+# This rule is the last one since we only want to post the "retry" message if there are anything to be posted.
+
+# There's no job to retry locally.
+return unless helper.ci?
+
+anything_to_post = status_report.values.any?(&:any?)
+
+if anything_to_post
+  markdown("**If needed, you can retry the [🔁 `danger-review` job](#{ENV['CI_JOB_URL']}) that generated this comment.**")
+end

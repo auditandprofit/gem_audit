@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+return if duo_code.suggestion_added?
+
+case helper.config.duo_code_review
+when :optional
+  markdown("We advise getting a review from GitLab Duo Code. You can assign `@GitLabDuo` as a reviewer to this merge request.")
+when :mandatory
+  failure("A review from GitLab Duo Code is mandatory. Please assign `@GitLabDuo` as a reviewer to this merge request.")
+end

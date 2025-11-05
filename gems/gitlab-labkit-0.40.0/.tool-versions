@@ -1,0 +1,3 @@
+ruby 3.4.5
+shfmt 3.12
+shellcheck 0.10.0
