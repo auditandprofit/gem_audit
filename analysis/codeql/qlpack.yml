@@ -1,0 +1,5 @@
+name: gem-audit/exec-primitives
+version: 0.0.1
+libraryPathDependencies:
+  - codeql/ruby-all
+  - codeql/ruby-queries
