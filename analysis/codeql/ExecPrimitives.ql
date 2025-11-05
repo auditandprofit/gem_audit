@@ -50,9 +50,14 @@ private predicate isOpen3Primitive(MethodCall call) {
 
 from MethodCall call
 where
-  isEvalLikePrimitive(call) or
-  isKernelPrimitive(call) or
-  isProcessPrimitive(call) or
-  isIOPrimitive(call) or
-  isOpen3Primitive(call)
-select call, "Call to code execution primitive \"" + call.getMethodName() + "\"."
+  (
+    isEvalLikePrimitive(call) or
+    isKernelPrimitive(call) or
+    isProcessPrimitive(call) or
+    isIOPrimitive(call) or
+    isOpen3Primitive(call)
+  )
+select call,
+  call.getEnclosingCallable(),
+  call.getLocation().getFile().getRelativePath(),
+  "Call to code execution primitive \"" + call.getMethodName() + "\"."
